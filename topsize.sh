@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-#set -x 
+#set -x
 set -e    # fail if the operation you invoke return non-zero exit code
 
 HUMAN_READABLE=false
@@ -13,10 +13,15 @@ input_args=( "${@}" )
 
 function usage()
 {
-  # TODO: Add lines about the meaning of each option
   cat <<EOF
 
 ${0} [--help] [-h] [-N] [-s minsize] [--] [dir]
+
+--help      Print this message
+-<filenum>  Number of files, where <filenum> is a positive integer
+-h          Print file sizes in a human readable format
+dir         Search directory (default: "${PWD}")
+--          Separator between options and directory
 
 EOF
 }
@@ -31,7 +36,7 @@ function check_option_validity()
   return 0
 }
 
-
+shopt -s extglob
 
 for ((i=0; i<"${#input_args[@]}"; ++i)); do
 
@@ -43,14 +48,15 @@ for ((i=0; i<"${#input_args[@]}"; ++i)); do
       exit 0
       ;;
 
-    -N)
-      check_option_validity "-N" || exit 42
-      i="$((i+1))"
-      if [[ "${input_args["${i}"]}" -le 0 ]]; then
+    -+([[:digit:]]) )
+      opt="${input_args["${i}"]}"
+      num="${opt:1:${#opt}}"
+      check_option_validity "${opt}" || exit 42
+      if [[ "${num}" -le 0 ]]; then
         echo "ERROR: Number of files should be a positive integer." 1>&2
         exit 59
       fi
-      readonly FILE_NUM="${input_args["${i}"]}"
+      readonly FILE_NUM="${num}"
       continue
       ;;
 
@@ -106,7 +112,8 @@ while read size_file_line; do
   fi
 
   if ${HUMAN_READABLE}; then
-    du -hs "${size_file_arr[1]}"
+    file_name="${size_file_arr[*]:1}"
+    du -hs "${file_name}"
   else
     echo "${size_file_line}"
   fi
