@@ -15,7 +15,19 @@ else
   fi
 fi
 
+if [[ ! -f "${FILE}" ]]; then
+  echo "ERROR: File '${FILE}' does not exist." 1>&2
+  exit 2
+fi
+
+if ! grep "^${USER_NAME}:" "${FILE}" &>/dev/null; then
+  echo "ERROR: User '${USER_NAME}' does not exist." 1>&2
+  exit 1
+fi
+
 while IFS=":" read -r username password userid groupid comment homedir cmdshell
 do
   echo "${homedir}"
 done < <(grep "^${USER_NAME}:" "${FILE}")
+
+exit 0
